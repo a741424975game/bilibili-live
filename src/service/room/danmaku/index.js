@@ -1,4 +1,3 @@
-import WebSocket from 'ws'
 import EventEmitter from 'events'
 import net from 'net'
 import _ from 'lodash'
@@ -26,8 +25,8 @@ export default class DanmakuService extends EventEmitter {
 
     this.roomId = config.roomId || '23058'  // 此处需要使用原始房间号
     this.userId = config.userId || this.randUid()
-    this.useWebsocket = config.useWebsocket === false ? false : true
-    this.useWSS = config.useWSS || false
+    this.useWebsocket = true
+    this.useWSS = false
     this.useGiftBundle = config.useGiftBundle || false
     this.giftBundleDelay = config.giftBundleDelay || 3e3
 
@@ -45,7 +44,7 @@ export default class DanmakuService extends EventEmitter {
       error: 'error'
     }
     this._heartbeatService = null
-    this._checkErrorService =  _.debounce(() => {
+    this._checkErrorService = _.debounce(() => {
       this.emit('error', 'check failed')
       this.reconnect()
     }, CHECK_ERROR_DELAY)
@@ -67,6 +66,7 @@ export default class DanmakuService extends EventEmitter {
       } else {
         this._socket = new WebSocket(`${WSDMPROTOCOL}://${WSDMSERVER}:${WSDMPORT}/${WSDMPATH}`)
       }
+      this._socket.binaryType = 'arraybuffer'
     } else {
       this._socket = net.connect(DMPORT, DMSERVER)
     }
@@ -93,44 +93,50 @@ export default class DanmakuService extends EventEmitter {
   handleEvents() {
     let socket = this._socket
     let events = this._socketEvents
+    let that = this
     if (this.useWebsocket) {
       events = this._websocketEvents
     }
 
-    socket.on(events.connect, () => {
-      if (socket !== this._socket) return
-      this.sendJoinRoom()
-      this.emit('connect')
-    })
+    // Connection opened
+    socket.addEventListener('open', function (event) {
+      if (socket !== this) return
+      that.sendJoinRoom()
+      that.emit('connect')
+    });
 
-    socket.on(events.data, (msg) => {
-      if (socket !== this._socket) return
-      this._checkErrorService()
-      DMDecoder.decodeData(msg).map(m => {
+    // Listen for messages
+    socket.addEventListener('message', function (event) {
+      if (socket !== this) return
+      that._checkErrorService()
+      DMDecoder.decodeData(new Buffer.from(event.data)).map(m => {
         if (m.type === 'connected') {
-          this.sendHeartbeat()
-          this.emit(m.type, m)
+          that.sendHeartbeat()
+          that.emit(m.type, m)
         } else {
-          if (m.type === 'gift' && this.useGiftBundle) {
-            this.bundleGift(m)
+          if (m.type === 'gift' && that.useGiftBundle) {
+            that.bundleGift(m)
           } else {
-            this.emit('data', m)
-            this.emit(m.type, m)
+            that.emit('data', m)
+            that.emit(m.type, m)
           }
         }
       })
-    })
+    });
 
-    socket.on(events.close, () => {
-      if (socket !== this._socket) return
-      this.emit('close')
-    })
+    // Listen for close
+    socket.addEventListener('close', function (event) {
+      if (socket !== this) return
+      that.emit('close')
+    });
 
-    socket.on(events.error, (err) => {
-      if (socket !== this._socket) return
-      this.emit('error', err)
-      this.reconnect()
-    })
+    // Listen for error
+    socket.addEventListener('error', function (event) {
+      if (socket !== this) return
+      that.emit('error', event.err)
+      that.reconnect()
+    });
+
   }
 
   sendJoinRoom() {
@@ -157,7 +163,7 @@ export default class DanmakuService extends EventEmitter {
 
     if (this._giftBundleMap.has(key)) {
       let giftEvent = this._giftBundleMap.get(key)
-      giftEvent.msg.gift.count = giftEvent.msg.gift.count*1 + msg.gift.count*1
+      giftEvent.msg.gift.count = giftEvent.msg.gift.count * 1 + msg.gift.count * 1
       giftEvent.event()
     } else {
       let giftEvent = {

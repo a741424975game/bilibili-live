@@ -56,7 +56,7 @@ export function get(requestUrl, config = {}) {
 }
 
 export function post(requestUrl, config = {}) {
-  let postData = typeof config.body == 'string'
+  let postData = typeof config.body === 'string'
     ? config.body
     : JSON.stringify(config.body || {})
   let parsed = url.parse(requestUrl)
@@ -70,7 +70,7 @@ export function post(requestUrl, config = {}) {
       'Content-Length': Buffer.byteLength(postData)
     }, config.headers)
   }
-  if (parsed.protocol == 'https:') {
+  if (parsed.protocol === 'https:') {
     return dispatchRequest(true, options, postData)
   } else {
     return dispatchRequest(false, options, postData)

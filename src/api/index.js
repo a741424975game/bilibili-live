@@ -1,20 +1,25 @@
 import qs from 'querystring'
-import { get, post } from '../utils/request.js'
+import {get, post} from '../utils/request.js'
 
 import RoomApi from './room/index.js'
 import UserApi from './user/index.js'
 
-const BASE_URL = 'api.live.bilibili.com/'
+const BASE_URL = '/apilivebilibilicom/'
 
 class Api {
   constructor(config = {}) {
-    this.protocol = config.useHttps ? 'https://' : 'http://'
+    // this.protocol = config.useHttps ? 'https://' : 'http://'
+    this.protocol = ''
+    // this.protocol = 'http://'
+
     this.cookie = config.cookie || ''
     this.roomId = config.roomId || '23058'
   }
 
   useHttps(use) {
-    this.protocol = use ? 'https://' : 'http://'
+    // this.protocol = use ? 'https://' : 'http://'
+    // this.protocol = 'http://'
+    this.protocol = ''
   }
 
   setCookie(cookie) {
@@ -25,10 +30,10 @@ class Api {
     this.roomId = roomId
   }
 
-  get(options) {
+  get (options) {
     let url = this.protocol + (options.url ? options.url : BASE_URL + options.uri)
     let headers = {
-      'Cookie': this.cookie
+      'Set-Cookie': this.cookie
     }
     let config = {}
     if (!options.html) config.headers = Object.assign(headers, options.headers)
@@ -39,7 +44,7 @@ class Api {
   post(options) {
     let url = this.protocol + (options.url ? options.url : BASE_URL + options.uri)
     let headers = {
-      'Cookie': this.cookie
+      'Set-Cookie': this.cookie
     }
     if (!options.isJson) headers['Content-Type'] = 'application/x-www-form-urlencoded'
     let config = {}

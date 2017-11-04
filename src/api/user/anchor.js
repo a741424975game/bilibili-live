@@ -61,15 +61,30 @@ export function blockUser(userId, hour) {
 }
 
 // 取消禁言
-export function deleteBlockUser(blockId) {
+export function deleteBlockUser(roomId, blockId) {
   return this.post({
     uri: 'liveact/del_room_block_user',
     body: {
-      roomid: this.roomId,
+      roomid: roomId,
       id: blockId
     }
   }).then(res => {
     let data = JSON.parse(res)
+    return data
+  })
+}
+
+// 获取黑名单
+export function getBlockUserList(roomId, page) {
+  return this.get({
+    uri: 'liveact/ajaxGetBlockList',
+    params: {
+      roomid: roomId,
+      page: page
+    }
+  }).then(res => {
+    let data = JSON.parse(res)
+    if (data.code != 0) return []
     return data
   })
 }

@@ -1,12 +1,6 @@
 # Bilibili live
 
-A Node.js Toolkit for Bilibili live service
-
-## Installation
-
-```bash
-npm install bilibili-live --save
-```
+A Node.js Toolkit for Bilibili live service (For Web)
 
 ## Documentation
 
@@ -17,7 +11,7 @@ import Live from 'bilibili-live'
 ```
 ##### Live.initRoom(config)
 ```javascript
-Live.initRoom({
+Live.Room({
   roomId: 92052 // 必填项 直播间地址中的房间号 对于短位ID会自动获取真实房间号
 }).then(room => { // 返回值为Promise
   room.on('connected') // 成功和弹幕服务器建立连接时触发
@@ -65,7 +59,7 @@ Live.initRoom({
   })
 })
 ```
-##### Live.initUser(config)
+##### Live.User(config)
 ```javascript
 Live.initUser({
   cookie: 'xxxxx', // 必填项 bilibili.com cookie
